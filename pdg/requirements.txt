@@ -1,0 +1,9 @@
+flask
+pandas
+scikit-learn
+nltk
+numpy
+Pillow
+opencv-python
+anthropic
+openai

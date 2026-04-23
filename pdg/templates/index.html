@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Description Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Product Description Generator</h1>
+            <p class="subtitle">Generate compelling product descriptions using AI & ML</p>
+        </header>
+
+        <!-- Input Mode Selection -->
+        <div id="mode-selection" class="mode-selection">
+            <h2>Choose Your Input Method</h2>
+            <div class="mode-cards">
+                <div class="mode-card" id="image-mode-card" onclick="selectMode('image')">
+                    <div class="mode-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Image Input</h3>
+                    <p>Upload a product image and let AI analyze it to generate a description</p>
+                </div>
+                <div class="mode-card" id="text-mode-card" onclick="selectMode('text')">
+                    <div class="mode-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Text Input</h3>
+                    <p>Enter product details manually to generate a tailored description</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Input Form -->
+        <div id="image-input-section" class="input-section" style="display: none;">
+            <div class="section-header">
+                <button type="button" class="back-btn" onclick="goBack()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back
+                </button>
+                <h2>Image-Based Description</h2>
+            </div>
+            
+            <form action="/predict_image" method="POST" enctype="multipart/form-data" id="image-form">
+                <div class="upload-area" id="upload-area">
+                    <input type="file" name="product_image" id="image-input" accept="image/*" required onchange="previewImage(event)">
+                    <div class="upload-placeholder" id="upload-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Drag & drop your product image here</p>
+                        <span>or click to browse</span>
+                        <small>Supports: PNG, JPG, JPEG, GIF, WEBP</small>
+                    </div>
+                    <div class="image-preview" id="image-preview" style="display: none;">
+                        <img id="preview-img" src="" alt="Preview">
+                        <button type="button" class="remove-btn" onclick="removeImage()">Remove</button>
+                    </div>
+                </div>
+
+                <div class="optional-fields">
+                    <h4>Optional: Add more details for better results</h4>
+                    <div class="form-group">
+                        <label for="img_product_name">Product Name (Optional)</label>
+                        <input type="text" id="img_product_name" name="product_name" placeholder="e.g., Wireless Headphones">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="img_category">Category (Optional)</label>
+                            <select id="img_category" name="category">
+                                <option value="">-- Auto-detect from image --</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Home">Home</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Groceries">Groceries</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="img_brand">Brand (Optional)</label>
+                            <input type="text" id="img_brand" name="brand" placeholder="e.g., TechPro">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="img_key_features">Additional Key Features (Optional)</label>
+                        <textarea id="img_key_features" name="key_features" rows="2" placeholder="e.g., waterproof, wireless charging, noise cancellation"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Generate Description from Image
+                </button>
+            </form>
+        </div>
+
+        <!-- Text Input Form -->
+        <div id="text-input-section" class="input-section" style="display: none;">
+            <div class="section-header">
+                <button type="button" class="back-btn" onclick="goBack()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back
+                </button>
+                <h2>Text-Based Description</h2>
+            </div>
+
+            <form action="/predict" method="POST" enctype="multipart/form-data" id="text-form">
+                <div class="form-group">
+                    <label for="product_name">Product Name <span class="required">*</span></label>
+                    <input type="text" id="product_name" name="product_name" value="{{ product_name or '' }}" placeholder="e.g., Wireless Headphones Pro" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">Category <span class="required">*</span></label>
+                        <select id="category" name="category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="Electronics" {% if category == 'Electronics' %}selected{% endif %}>Electronics</option>
+                            <option value="Clothing" {% if category == 'Clothing' %}selected{% endif %}>Clothing</option>
+                            <option value="Home" {% if category == 'Home' %}selected{% endif %}>Home</option>
+                            <option value="Sports" {% if category == 'Sports' %}selected{% endif %}>Sports</option>
+                            <option value="Groceries" {% if category == 'Groceries' %}selected{% endif %}>Groceries</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="brand">Brand</label>
+                        <input type="text" id="brand" name="brand" value="{{ brand or '' }}" placeholder="e.g., TechPro">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="key_features">Key Features</label>
+                    <textarea id="key_features" name="key_features" rows="3" placeholder="e.g., wireless, noise cancellation, 30-hour battery life">{{ key_features or '' }}</textarea>
+                    <small>Separate features with commas for better results</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="product_image_text">Product Image (Optional)</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="product_image_text" name="product_image" accept="image/*">
+                        <div class="file-input-display" id="file-display-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>Choose an image (optional)</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if image_url %}
+                <div class="current-image">
+                    <label>Current Image:</label>
+                    <img src="{{ image_url }}" alt="Product Image" class="product-thumbnail">
+                    <input type="hidden" name="existing_image" value="{{ image_filename }}">
+                </div>
+                {% endif %}
+
+                <button type="submit" class="submit-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Generate Description
+                </button>
+            </form>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="error-message">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Results Section -->
+        {% if description %}
+        <div class="result-section">
+            <h2>Generated Description
+                {% if ai_powered %}
+                <span class="ai-badge">🤖 AI-Powered Analysis</span>
+                {% endif %}
+            </h2>
+            
+            {% if image_url %}
+            <div class="result-image">
+                <img src="{{ image_url }}" alt="Product Image">
+            </div>
+            {% endif %}
+
+            {% if image_analysis %}
+            <div class="analysis-info">
+                <h3>Image Analysis Results
+                    {% if ai_powered %}
+                    <span class="analysis-method">(Claude Vision API)</span>
+                    {% else %}
+                    <span class="analysis-method">(Computer Vision)</span>
+                    {% endif %}
+                </h3>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span class="label">Category:</span>
+                        <span class="value">{{ image_analysis.category }}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">Confidence:</span>
+                        <span class="value">{{ (image_analysis.confidence * 100)|round }}%</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">Primary Color:</span>
+                        <span class="value">{{ image_analysis.primary_color }}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">Brand:</span>
+                        <span class="value">{{ image_analysis.brand }}</span>
+                    </div>
+                </div>
+
+                {% if image_analysis.visual_analysis %}
+                <div class="visual-analysis">
+                    <h4>Visual Details</h4>
+                    <div class="visual-grid">
+                        {% if image_analysis.visual_analysis.material %}
+                        <div class="visual-item">
+                            <span class="label">Material:</span>
+                            <span class="value">{{ image_analysis.visual_analysis.material }}</span>
+                        </div>
+                        {% endif %}
+                        {% if image_analysis.visual_analysis.condition %}
+                        <div class="visual-item">
+                            <span class="label">Condition:</span>
+                            <span class="value">{{ image_analysis.visual_analysis.condition }}</span>
+                        </div>
+                        {% endif %}
+                        {% if image_analysis.visual_analysis.style %}
+                        <div class="visual-item">
+                            <span class="label">Style:</span>
+                            <span class="value">{{ image_analysis.visual_analysis.style }}</span>
+                        </div>
+                        {% endif %}
+                        {% if image_analysis.visual_analysis.target_audience %}
+                        <div class="visual-item">
+                            <span class="label">Target Audience:</span>
+                            <span class="value">{{ image_analysis.visual_analysis.target_audience }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if image_analysis.unique_characteristics %}
+                <div class="unique-chars">
+                    <h4>Unique Characteristics</h4>
+                    <ul>
+                        {% for char in image_analysis.unique_characteristics %}
+                        <li>{{ char }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="color-palette">
+                    <h4>Dominant Colors:</h4>
+                    <div class="colors">
+                        {% for color_name, rgb, percentage in image_analysis.color_info %}
+                        <div class="color-swatch" style="background-color: rgb({{ rgb[0] }}, {{ rgb[1] }}, {{ rgb[2] }});" title="{{ color_name }}: {{ percentage|round(1) }}%">
+                            <span class="color-name">{{ color_name }}</span>
+                            <span class="color-percent">{{ percentage|round(1) }}%</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="description-box">
+                {% if ai_powered %}
+                <div class="ai-note">✨ This description was generated by AI analysis of your product image</div>
+                {% endif %}
+                <p>{{ description }}</p>
+            </div>
+
+            <div class="word-count">
+                Word Count: {{ description.split()|length }} words
+            </div>
+
+            <div class="action-buttons">
+                <button onclick="copyToClipboard()" class="copy-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy to Clipboard
+                </button>
+                <button onclick="location.href='/'" class="new-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Generate New
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>Product Description Generator | Powered by ML & NLP</p>
+    </footer>
+
+    <script>
+        // Mode selection
+        function selectMode(mode) {
+            document.getElementById('mode-selection').style.display = 'none';
+            
+            if (mode === 'image') {
+                document.getElementById('image-input-section').style.display = 'block';
+                document.getElementById('text-input-section').style.display = 'none';
+            } else {
+                document.getElementById('text-input-section').style.display = 'block';
+                document.getElementById('image-input-section').style.display = 'none';
+            }
+        }
+
+        function goBack() {
+            document.getElementById('mode-selection').style.display = 'block';
+            document.getElementById('image-input-section').style.display = 'none';
+            document.getElementById('text-input-section').style.display = 'none';
+        }
+
+        // Image preview
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('upload-placeholder').style.display = 'none';
+                    document.getElementById('image-preview').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            document.getElementById('image-input').value = '';
+            document.getElementById('preview-img').src = '';
+            document.getElementById('upload-placeholder').style.display = 'block';
+            document.getElementById('image-preview').style.display = 'none';
+        }
+
+        // Drag and drop
+        const uploadArea = document.getElementById('upload-area');
+
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    document.getElementById('image-input').files = e.dataTransfer.files;
+                    previewImage({ target: { files: [file] } });
+                }
+            });
+        }
+
+        // File input display update
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const display = this.parentElement.querySelector('.file-input-display span');
+                if (display && this.files[0]) {
+                    display.textContent = this.files[0].name;
+                }
+            });
+        });
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const description = document.querySelector('.description-box p').innerText;
+            navigator.clipboard.writeText(description).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Check if we should show results or mode selection
+        {% if description %}
+        document.getElementById('mode-selection').style.display = 'none';
+        {% endif %}
+    </script>
+</body>
+</html>
